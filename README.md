@@ -8,6 +8,8 @@ Rubber Duck is an AI-powered code roasting app. Paste a GitHub repo URL, and a s
 
 **Built for [ElevenHacks](https://hacks.elevenlabs.io/) Week 1 (Cloudflare Partner)**
 
+🌐 **Live Demo**: [rubber-duck.yashwanth-dev.workers.dev](https://rubber-duck.yashwanth-dev.workers.dev)
+
 ---
 
 ## 🔥 Features
@@ -46,7 +48,7 @@ Rubber Duck is an AI-powered code roasting app. Paste a GitHub repo URL, and a s
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rubber-duck.git
+git clone https://github.com/katipally/rubber-duck.git
 cd rubber-duck
 npm install
 ```
