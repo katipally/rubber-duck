@@ -104,7 +104,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
     this.updateStatus("Fetching your crimes from GitHub...");
 
     try {
-      const { files } = await fetchRepoTree(parsed.owner, parsed.repo, pat);
+      const { files } = await fetchRepoTree(parsed.owner, parsed.repo, pat, this.env.GITHUB_TOKEN);
       if (files.length === 0) {
         this.setState({ ...this.state, isProcessing: false, statusMessage: "" });
         return {
@@ -175,7 +175,8 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
         parsed.owner,
         parsed.repo,
         filePath,
-        pat
+        pat,
+        this.env.GITHUB_TOKEN
       );
 
       this.updateStatus("Generating devastating critique...");

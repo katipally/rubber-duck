@@ -66,13 +66,16 @@ export function parseGitHubUrl(url: string): {
 export async function fetchRepoTree(
   owner: string,
   repo: string,
-  pat?: string
+  pat?: string,
+  serverToken?: string
 ): Promise<{ files: RepoFile[]; truncated: boolean }> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github.v3+json",
     "User-Agent": "RubberDuck/1.0",
   };
-  if (pat) headers.Authorization = `token ${pat}`;
+  // User PAT takes priority, then server token
+  const token = pat || serverToken;
+  if (token) headers.Authorization = `token ${token}`;
 
   // Get default branch
   const repoResp = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
@@ -139,13 +142,15 @@ export async function fetchFileContent(
   owner: string,
   repo: string,
   path: string,
-  pat?: string
+  pat?: string,
+  serverToken?: string
 ): Promise<FileContent> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github.v3.raw",
     "User-Agent": "RubberDuck/1.0",
   };
-  if (pat) headers.Authorization = `token ${pat}`;
+  const token = pat || serverToken;
+  if (token) headers.Authorization = `token ${token}`;
 
   const resp = await fetch(
     `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,

@@ -21,4 +21,5 @@ Thumbs.db
 .wrangler/
 
 # Generated types
-env.d.ts.playwright-mcp/
+env.d.ts
+.playwright-mcp/

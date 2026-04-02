@@ -31,7 +31,9 @@ export default function App() {
     onClose: () => setConnected(false),
   });
 
-  const { speak, ttsError, stop: stopSpeaking } = useStreamingTTS({ agent });
+  const voiceId = agent.state?.selectedVoiceId || "JBFqnCBsd6RMkjVDRZzb";
+  const ttsApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY ?? "";
+  const { speak, isSpeaking, ttsError, stop: stopSpeaking } = useStreamingTTS({ voiceId, apiKey: ttsApiKey });
 
   const handleLoadRepo = useCallback(
     async (url: string, patToken?: string) => {

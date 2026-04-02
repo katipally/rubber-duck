@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 interface UseStreamingTTSOptions {
-  agent: any;
+  voiceId: string;
+  apiKey: string;
 }
 
 interface UseStreamingTTSReturn {
@@ -11,10 +12,15 @@ interface UseStreamingTTSReturn {
   stop: () => void;
 }
 
-export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreamingTTSReturn {
+/**
+ * Calls ElevenLabs TTS directly from the browser.
+ * This avoids Cloudflare Worker shared IPs being blocked by ElevenLabs' free-tier proxy detection.
+ */
+export function useStreamingTTS({ voiceId, apiKey }: UseStreamingTTSOptions): UseStreamingTTSReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsError, setTtsError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -25,6 +31,10 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
         audioRef.current.pause();
         audioRef.current = null;
       }
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
     };
   }, []);
 
@@ -34,26 +44,51 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
       audioRef.current.currentTime = 0;
       audioRef.current = null;
     }
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
     if (mountedRef.current) setIsSpeaking(false);
   }, []);
 
   const speak = useCallback(
     async (text: string) => {
-      if (!agent) return;
+      if (!apiKey || !voiceId) return;
 
-      // Stop any current audio
       stop();
 
       try {
         setIsSpeaking(true);
         setTtsError(null);
 
-        // Call backend to generate audio
-        const dataUri: string = await agent.call("speak", [text]);
+        // Call ElevenLabs REST API directly from the browser
+        const response = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?output_format=mp3_44100_128&optimize_streaming_latency=3`,
+          {
+            method: "POST",
+            headers: {
+              "xi-api-key": apiKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              text,
+              model_id: "eleven_flash_v2_5",
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Status code: ${response.status}\nBody: ${errorBody}`);
+        }
 
         if (!mountedRef.current) return;
 
-        const audio = new Audio(dataUri);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+
+        const audio = new Audio(url);
         audioRef.current = audio;
 
         audio.onended = () => {
@@ -61,6 +96,8 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
             setIsSpeaking(false);
             audioRef.current = null;
           }
+          URL.revokeObjectURL(url);
+          blobUrlRef.current = null;
         };
 
         audio.onerror = () => {
@@ -68,6 +105,8 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
             setIsSpeaking(false);
             audioRef.current = null;
           }
+          URL.revokeObjectURL(url);
+          blobUrlRef.current = null;
         };
 
         await audio.play();
@@ -85,7 +124,7 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
         }
       }
     },
-    [agent, stop]
+    [apiKey, voiceId, stop]
   );
 
   return { speak, isSpeaking, ttsError, stop };

@@ -37,11 +37,23 @@ function GearIcon({ className }: { className?: string }) {
   );
 }
 
+// Curated voices that work well for the "Senior Dev" persona
+const CURATED_VOICES: Voice[] = [
+  { voiceId: "JBFqnCBsd6RMkjVDRZzb", name: "George — British Storyteller (Default)", previewUrl: null, labels: { accent: "british", gender: "male" } },
+  { voiceId: "nPczCjzI2devNBz1zQrb", name: "Brian — Deep & Resonant", previewUrl: null, labels: { accent: "american", gender: "male" } },
+  { voiceId: "N2lVS1w4EtoT3dr4eOWO", name: "Callum — Husky Trickster", previewUrl: null, labels: { accent: "transatlantic", gender: "male" } },
+  { voiceId: "iP95p4xoKVk53GoZ742B", name: "Chris — Charming & Down-to-Earth", previewUrl: null, labels: { accent: "american", gender: "male" } },
+  { voiceId: "IKne3meq5aSn9XLyUdCD", name: "Charlie — Deep & Confident", previewUrl: null, labels: { accent: "australian", gender: "male" } },
+  { voiceId: "cjVigY5qzO86Huf0OWal", name: "Eric — Smooth & Trustworthy", previewUrl: null, labels: { accent: "american", gender: "male" } },
+  { voiceId: "EXAVITQu4vr4xnSDxMaL", name: "Bella — Professional & Bright", previewUrl: null, labels: { accent: "american", gender: "female" } },
+  { voiceId: "XB0fDUnXU5powFXDhCwa", name: "Charlotte — Confident & Seductive", previewUrl: null, labels: { accent: "english-swedish", gender: "female" } },
+];
+
 export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanelProps) {
   const [models, setModels] = useState<Model[]>([]);
-  const [voices, setVoices] = useState<Voice[]>([]);
+  const [voices, setVoices] = useState<Voice[]>(CURATED_VOICES);
   const [selectedModel, setSelectedModel] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState("");
+  const [selectedVoice, setSelectedVoice] = useState("JBFqnCBsd6RMkjVDRZzb");
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const fetched = useRef(false);
@@ -50,17 +62,39 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
     if (!agent || fetched.current) return;
     fetched.current = true;
 
+    // Models come from the agent (static list, no API call)
     agent.call("listModels").then((m: Model[]) => {
       setModels(m);
       if (agent.state?.selectedModel) setSelectedModel(agent.state.selectedModel);
       else if (m.length > 0) setSelectedModel(m[0].id);
     }).catch((err: unknown) => console.error("Failed to load models:", err));
 
-    agent.call("listVoices").then((v: Voice[]) => {
-      setVoices(v);
-      if (agent.state?.selectedVoiceId) setSelectedVoice(agent.state.selectedVoiceId);
-      else if (v.length > 0) setSelectedVoice(v[0].voiceId);
-    }).catch((err: unknown) => console.error("Failed to load voices:", err));
+    // Load voices from ElevenLabs directly in the browser (avoids worker IP blocking)
+    const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
+    if (apiKey) {
+      fetch("https://api.elevenlabs.io/v1/voices", {
+        headers: { "xi-api-key": apiKey },
+      })
+        .then((r) => r.json())
+        .then((data: { voices?: Array<{ voice_id: string; name: string; preview_url?: string; labels?: Record<string, string> }> }) => {
+          if (data.voices && data.voices.length > 0) {
+            setVoices(
+              data.voices.map((v) => ({
+                voiceId: v.voice_id,
+                name: v.name,
+                previewUrl: v.preview_url ?? null,
+                labels: v.labels ?? {},
+              }))
+            );
+          }
+        })
+        .catch(() => {
+          // Keep curated defaults on error
+        });
+    }
+
+    // Sync selected voice from agent state
+    if (agent.state?.selectedVoiceId) setSelectedVoice(agent.state.selectedVoiceId);
   }, [agent]);
 
   useEffect(() => {
