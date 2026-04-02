@@ -11,7 +11,8 @@ export interface FileContent {
   size: number;
 }
 
-const GITHUB_API = "https://api.github.com";
+import { GITHUB_API_BASE, MAX_FILE_CHARS, MAX_TREE_FILES } from "./constants";
+
 
 function getLanguageFromPath(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
@@ -78,7 +79,7 @@ export async function fetchRepoTree(
   if (token) headers.Authorization = `token ${token}`;
 
   // Get default branch
-  const repoResp = await fetch(`${GITHUB_API}/repos/${owner}/${repo}`, {
+  const repoResp = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}`, {
     headers,
   });
   if (!repoResp.ok) {
@@ -91,7 +92,7 @@ export async function fetchRepoTree(
 
   // Get tree
   const treeResp = await fetch(
-    `${GITHUB_API}/repos/${owner}/${repo}/git/trees/${repoData.default_branch}?recursive=1`,
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/trees/${repoData.default_branch}?recursive=1`,
     { headers }
   );
   if (!treeResp.ok) throw new Error(`Failed to fetch repo tree: ${treeResp.status}`);
@@ -153,16 +154,15 @@ export async function fetchFileContent(
   if (token) headers.Authorization = `token ${token}`;
 
   const resp = await fetch(
-    `${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`,
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}`,
     { headers }
   );
   if (!resp.ok) throw new Error(`Failed to fetch ${path}: ${resp.status}`);
 
   let content = await resp.text();
   // Truncate very large files to avoid blowing up context
-  const MAX_CHARS = 6000;
-  if (content.length > MAX_CHARS) {
-    content = content.slice(0, MAX_CHARS) + "\n\n// ... [TRUNCATED — file too long, which is a roast in itself]";
+  if (content.length > MAX_FILE_CHARS) {
+    content = content.slice(0, MAX_FILE_CHARS) + "\n\n// ... [TRUNCATED — file too long, which is a roast in itself]";
   }
 
   return {
@@ -175,7 +175,7 @@ export async function fetchFileContent(
 
 export function buildFileTree(files: RepoFile[]): string {
   return files
-    .slice(0, 200) // limit tree size
+    .slice(0, MAX_TREE_FILES) // limit tree size
     .map((f) => `${f.path} (${f.size} bytes)`)
     .join("\n");
 }

@@ -16,7 +16,7 @@ export default function RoastDisplay({ roastText, fileName, isAnimating, isSpeak
   const prevTextRef = useRef<string | null>(null);
   const useTTSSync = isSpeaking && revealedCount != null;
 
-  // TTS-synced reveal: override internal typewriter when TTS is driving
+  // TTS-synced reveal
   useEffect(() => {
     if (!useTTSSync || !roastText) return;
     if (intervalRef.current) {
@@ -64,7 +64,7 @@ export default function RoastDisplay({ roastText, fileName, isAnimating, isSpeak
     };
   }, [roastText, isAnimating, useTTSSync]);
 
-  // Show full text when TTS finishes (isSpeaking goes false)
+  // Show full text when TTS finishes
   useEffect(() => {
     if (!isSpeaking && roastText && prevTextRef.current === roastText) {
       setDisplayedText(roastText);
@@ -76,20 +76,20 @@ export default function RoastDisplay({ roastText, fileName, isAnimating, isSpeak
 
   return (
     <div className="mx-auto w-full max-w-2xl animate-fade-in-up">
-      <div className={`relative space-y-3 border border-neon-pink/30 bg-neon-surface p-6 neon-border-pink scanline-overlay overflow-hidden ${shaking ? "shake-it" : ""}`}>
+      <div className={`-rotate-1 space-y-3 border-[3px] border-neo-ink bg-neo-surface p-6 shadow-[6px_6px_0_#dc2626] transition-transform duration-200 hover:rotate-0 ${shaking ? "shake-it" : ""}`}>
         {fileName && (
-          <div className="flex items-center gap-2 text-sm text-neon-muted">
-            <span className="font-mono font-bold text-neon-cyan">FILE</span>
-            <span className="font-mono text-neon-ink">{fileName}</span>
-            <span className="text-neon-muted">— the verdict:</span>
+          <div className="flex items-center gap-2 text-sm text-neutral-600">
+            <span className="font-mono font-bold text-neo-red">FILE</span>
+            <span className="font-mono text-neo-ink">{fileName}</span>
+            <span className="text-neutral-500">— the verdict:</span>
           </div>
         )}
 
-        <div className="text-lg italic leading-relaxed text-neon-ink">
+        <div className="text-lg italic leading-relaxed text-neo-ink">
           <span>&ldquo;{displayedText}</span>
           {isTyping && (
             <span
-              className="ml-0.5 inline-block font-black text-neon-green animate-cursor-blink"
+              className="ml-0.5 inline-block font-black text-neo-red animate-cursor-blink"
               aria-hidden
             >
               |
@@ -99,7 +99,7 @@ export default function RoastDisplay({ roastText, fileName, isAnimating, isSpeak
         </div>
 
         <div className="flex justify-end">
-          <span className="font-mono text-xs font-bold uppercase tracking-widest text-neon-green/80">
+          <span className="font-mono text-xs font-bold uppercase tracking-widest text-neo-red/80">
             — Rubber Duck Code Review
           </span>
         </div>

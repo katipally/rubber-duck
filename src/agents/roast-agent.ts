@@ -2,25 +2,28 @@ import { createWorkersAI } from "workers-ai-provider";
 import { callable } from "agents";
 import { AIChatAgent } from "@cloudflare/ai-chat";
 import { generateText } from "ai";
-import { createClient, streamToDataUri } from "../lib/elevenlabs";
 import {
   parseGitHubUrl,
   fetchRepoTree,
   fetchFileContent,
   buildFileTree,
   pickRoastWorthyFiles,
-  type RepoFile,
-  type FileContent,
 } from "../lib/github";
 import {
   buildSavagePrompt,
-  buildFilePickerPrompt,
   buildRepoOverviewPrompt,
   getShameLevel,
   getShameLevelIndex,
   getProgressToNextLevel,
   type ShameLevel,
 } from "../lib/prompts";
+import {
+  DEFAULT_MODEL,
+  DEFAULT_VOICE_ID,
+  ELEVENLABS_TTS_MODEL,
+  TOKEN_LIMITS,
+  WORKERS_AI_MODELS,
+} from "../lib/constants";
 
 export interface RoastHistoryEntry {
   fileName: string;
@@ -37,14 +40,12 @@ export interface RoastAgentState {
   roastCache: Record<string, { roastText: string; timestamp: number }>;
   currentRepo: string | null;
   repoFiles: Array<{ path: string; reason: string }> | null;
+  fileContents: Record<string, { content: string; language: string }>;
   selectedModel: string;
   selectedVoiceId: string;
   isProcessing: boolean;
   statusMessage: string;
 }
-
-const DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct";
-const DEFAULT_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
 
 export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
   initialState: RoastAgentState = {
@@ -56,6 +57,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
     roastCache: {},
     currentRepo: null,
     repoFiles: null,
+    fileContents: {},
     selectedModel: DEFAULT_MODEL,
     selectedVoiceId: DEFAULT_VOICE_ID,
     isProcessing: false,
@@ -82,6 +84,52 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       shameLevelIndex: getShameLevelIndex(newLevel),
       progressToNext: getProgressToNextLevel(newLevel),
     });
+  }
+
+  /** Build context from other pre-loaded files for cross-file roasting */
+  private buildRepoContext(currentFile: string, currentContent: string): string {
+    const parts: string[] = [];
+
+    // Repo structure summary
+    if (this.state.repoFiles) {
+      parts.push("REPO FILES SELECTED FOR REVIEW:");
+      for (const f of this.state.repoFiles) {
+        parts.push(`  ${f.path} — ${f.reason}`);
+      }
+    }
+
+    // Extract import/require statements from current file to find related files
+    const importPattern = /(?:import\s+.*from\s+['"]([^'"]+)['"]|require\s*\(\s*['"]([^'"]+)['"]\s*\))/g;
+    const imports: string[] = [];
+    let match;
+    while ((match = importPattern.exec(currentContent)) !== null) {
+      imports.push(match[1] || match[2]);
+    }
+
+    // Find related files: same directory or imported
+    const currentDir = currentFile.split("/").slice(0, -1).join("/");
+    const relatedSnippets: string[] = [];
+
+    for (const [path, { content, language }] of Object.entries(this.state.fileContents)) {
+      if (path === currentFile) continue;
+
+      const fileDir = path.split("/").slice(0, -1).join("/");
+      const isImported = imports.some((imp) => path.includes(imp.replace(/^[./]+/, "")));
+      const isSameDir = fileDir === currentDir && currentDir !== "";
+
+      if (isImported || isSameDir) {
+        // Include a meaningful snippet (first 30 lines)
+        const snippet = content.split("\n").slice(0, 30).join("\n");
+        relatedSnippets.push(`--- ${path} (${language})${isImported ? " [IMPORTED]" : " [SAME DIR]"} ---\n${snippet}`);
+      }
+    }
+
+    if (relatedSnippets.length > 0) {
+      parts.push("\nRELATED FILES (the AI should cross-reference these):");
+      parts.push(relatedSnippets.join("\n\n"));
+    }
+
+    return parts.join("\n");
   }
 
   @callable()
@@ -121,22 +169,42 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       const truncatedTree = fileTree.split("\n").slice(0, 100).join("\n") +
         (files.length > 100 ? `\n... and ${files.length - 100} more files` : "");
 
-      // Generate repo overview roast
-      this.updateStatus("Judging your repository structure...");
       const workersai = createWorkersAI({ binding: this.env.AI });
-      const overviewPrompt = buildRepoOverviewPrompt(
-        `${parsed.owner}/${parsed.repo}`,
-        truncatedTree
-      );
-      const { text: overview } = await generateText({
-        model: workersai(this.state.selectedModel),
-        prompt: overviewPrompt,
-        maxTokens: 300,
-      });
 
       // Pick worst files using smart heuristics (more reliable than AI JSON)
       this.updateStatus("Identifying your worst offenses...");
       const pickedFiles = pickRoastWorthyFiles(files, 5);
+
+      // Pre-fetch content of all picked files for deep context
+      this.updateStatus("Reading ALL your code... nowhere to hide...");
+      const fileContents: Record<string, { content: string; language: string }> = {};
+      const fetchPromises = pickedFiles.map(async (pf) => {
+        try {
+          const fc = await fetchFileContent(parsed.owner, parsed.repo, pf.path, pat, this.env.GITHUB_TOKEN);
+          fileContents[fc.path] = { content: fc.content, language: fc.language };
+        } catch {
+          // Skip files that fail to fetch
+        }
+      });
+      await Promise.all(fetchPromises);
+
+      // Generate overview with actual file summaries
+      this.updateStatus("Forming first impressions with actual code...");
+      const fileSummaries = Object.entries(fileContents).map(([path, { content, language }]) => {
+        const firstLines = content.split("\n").slice(0, 5).join("\n");
+        return `--- ${path} (${language}) ---\n${firstLines}`;
+      }).join("\n\n");
+
+      const overviewPrompt = buildRepoOverviewPrompt(
+        `${parsed.owner}/${parsed.repo}`,
+        truncatedTree,
+        fileSummaries
+      );
+      const { text: overview } = await generateText({
+        model: workersai(this.state.selectedModel),
+        prompt: overviewPrompt,
+        maxTokens: TOKEN_LIMITS.OVERVIEW,
+      });
 
       const newCache = { ...this.state.roastCache };
       newCache["__overview__"] = { roastText: overview, timestamp: Date.now() };
@@ -145,6 +213,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
         ...this.state,
         currentRepo: url,
         repoFiles: pickedFiles,
+        fileContents,
         roastCache: newCache,
         isProcessing: false,
         statusMessage: "",
@@ -177,13 +246,23 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
     this.updateStatus(`Reading ${filePath}... preparing insults...`);
 
     try {
-      const file = await fetchFileContent(
-        parsed.owner,
-        parsed.repo,
-        filePath,
-        pat,
-        this.env.GITHUB_TOKEN
-      );
+      // Use pre-loaded content if available, otherwise fetch
+      let file;
+      const cached = this.state.fileContents[filePath];
+      if (cached) {
+        file = { path: filePath, content: cached.content, language: cached.language, size: cached.content.length };
+      } else {
+        file = await fetchFileContent(
+          parsed.owner,
+          parsed.repo,
+          filePath,
+          pat,
+          this.env.GITHUB_TOKEN
+        );
+      }
+
+      // Build cross-file context from pre-loaded files
+      const repoContext = this.buildRepoContext(filePath, file.content);
 
       this.updateStatus("Generating devastating critique...");
       const workersai = createWorkersAI({ binding: this.env.AI });
@@ -194,29 +273,31 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
         file.path,
         file.content,
         file.language,
-        this.state.roastHistory.map((r) => r.roastText)
+        this.state.roastHistory.map((r) => r.roastText),
+        repoContext
       );
 
       const { text: roastText } = await generateText({
         model: workersai(this.state.selectedModel),
         prompt,
-        maxTokens: 400,
+        maxTokens: TOKEN_LIMITS.FILE_ROAST,
       });
 
       // Escalate shame
       this.escalateShame();
 
-      // Add to history and cache
+      // Add to history (capped at 20) and cache
       const entry: RoastHistoryEntry = {
         fileName: filePath,
         roastText,
         timestamp: Date.now(),
       };
+      const newHistory = [...this.state.roastHistory, entry].slice(-20);
       const newCache = { ...this.state.roastCache };
       newCache[filePath] = { roastText, timestamp: Date.now() };
       this.setState({
         ...this.state,
-        roastHistory: [...this.state.roastHistory, entry],
+        roastHistory: newHistory,
         roastCache: newCache,
         isProcessing: false,
         statusMessage: "",
@@ -233,63 +314,14 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
   }
 
   @callable()
-  async speak(text: string): Promise<string> {
-    const client = createClient(this.env.ELEVENLABS_API_KEY);
-    const voiceId = this.state.selectedVoiceId || DEFAULT_VOICE_ID;
-    const audio = await client.textToSpeech.convert(voiceId, {
-      text,
-      modelId: "eleven_flash_v2_5",
-      outputFormat: "mp3_44100_128",
-    });
-    return streamToDataUri(audio);
-  }
-
-  @callable()
-  async listVoices(): Promise<
-    Array<{ voiceId: string; name: string; previewUrl: string | null; labels: Record<string, string> }>
-  > {
-    const client = createClient(this.env.ELEVENLABS_API_KEY);
-    const response = await client.voices.search({ pageSize: 50 });
-    return (response.voices ?? []).map((v) => ({
-      voiceId: v.voiceId ?? "",
-      name: v.name ?? "Unknown",
-      previewUrl: v.previewUrl ?? null,
-      labels: (v.labels as Record<string, string>) ?? {},
-    }));
-  }
-
-  @callable()
   async listModels(): Promise<
     Array<{ id: string; name: string; description: string }>
   > {
-    // Curated list of Workers AI text generation models
-    return [
-      {
-        id: "@cf/meta/llama-3.1-8b-instruct",
-        name: "Llama 3.1 8B",
-        description: "Fast, good for quick roasts",
-      },
-      {
-        id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-        name: "Llama 3.3 70B",
-        description: "Smarter, more devastating roasts (slower)",
-      },
-      {
-        id: "@cf/moonshotai/kimi-k2.5",
-        name: "Kimi K2.5",
-        description: "Excellent reasoning, brutal analysis",
-      },
-      {
-        id: "@cf/deepseek/deepseek-r1-distill-llama-70b",
-        name: "DeepSeek R1 70B",
-        description: "Deep reasoning, methodical destruction",
-      },
-      {
-        id: "@cf/google/gemma-3-12b-it",
-        name: "Gemma 3 12B",
-        description: "Balanced speed and wit",
-      },
-    ];
+    return WORKERS_AI_MODELS.map(({ id, name, description }) => ({
+      id,
+      name,
+      description,
+    }));
   }
 
   @callable()
@@ -325,6 +357,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       roastCache: {},
       currentRepo: null,
       repoFiles: null,
+      fileContents: {},
       selectedModel: this.state.selectedModel,
       selectedVoiceId: this.state.selectedVoiceId,
       isProcessing: false,
@@ -394,7 +427,7 @@ RULES:
       const { text: roastText } = await generateText({
         model: workersai(this.state.selectedModel),
         prompt,
-        maxTokens: 500,
+        maxTokens: TOKEN_LIMITS.FULL_REPO,
       });
 
       this.escalateShame();
@@ -410,7 +443,7 @@ RULES:
 
       this.setState({
         ...this.state,
-        roastHistory: [...this.state.roastHistory, entry],
+        roastHistory: [...this.state.roastHistory, entry].slice(-20),
         roastCache: newCache,
         isProcessing: false,
         statusMessage: "",

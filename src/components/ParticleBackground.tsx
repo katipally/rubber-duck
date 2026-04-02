@@ -15,11 +15,11 @@ interface Particle {
 }
 
 const CONFIGS = [
-  { count: 35, speed: 0.3, hueRange: [180, 195], saturation: 100, lightness: 55 },  // Novice: cyan
-  { count: 50, speed: 0.5, hueRange: [270, 290], saturation: 90, lightness: 55 },   // Intermediate: purple
-  { count: 65, speed: 0.8, hueRange: [50, 60], saturation: 100, lightness: 55 },    // Senior: yellow
-  { count: 85, speed: 1.2, hueRange: [330, 345], saturation: 100, lightness: 55 },  // Staff: pink
-  { count: 120, speed: 1.8, hueRange: [0, 10], saturation: 100, lightness: 50 },    // Architect: red fire
+  { count: 30, speed: 0.3, hueRange: [0, 0], saturation: 0, lightness: 40 },       // Novice: dim grey
+  { count: 45, speed: 0.5, hueRange: [50, 60], saturation: 70, lightness: 55 },     // Intermediate: yellow
+  { count: 60, speed: 0.8, hueRange: [25, 40], saturation: 80, lightness: 55 },     // Senior: orange
+  { count: 80, speed: 1.2, hueRange: [0, 15], saturation: 85, lightness: 50 },      // Staff: red
+  { count: 120, speed: 1.8, hueRange: [0, 10], saturation: 90, lightness: 40 },     // Architect: dark red fire
 ];
 
 export default function ParticleBackground({ shameLevel }: ParticleBackgroundProps) {
@@ -43,7 +43,6 @@ export default function ParticleBackground({ shameLevel }: ParticleBackgroundPro
 
     const cfg = CONFIGS[configIdx];
 
-    // Initialize particles
     const particles: Particle[] = [];
     for (let i = 0; i < cfg.count; i++) {
       const hue = cfg.hueRange[0] + Math.random() * (cfg.hueRange[1] - cfg.hueRange[0]);
@@ -53,7 +52,7 @@ export default function ParticleBackground({ shameLevel }: ParticleBackgroundPro
         vx: (Math.random() - 0.5) * cfg.speed,
         vy: -Math.random() * cfg.speed - 0.1,
         size: Math.random() * 2.5 + 0.5,
-        opacity: Math.random() * 0.6 + 0.15,
+        opacity: Math.random() * 0.5 + 0.1,
         hue,
       });
     }
@@ -66,7 +65,6 @@ export default function ParticleBackground({ shameLevel }: ParticleBackgroundPro
         p.x += p.vx;
         p.y += p.vy;
 
-        // Wrap around
         if (p.y < -10) {
           p.y = canvas.height + 10;
           p.x = Math.random() * canvas.width;
@@ -78,7 +76,7 @@ export default function ParticleBackground({ shameLevel }: ParticleBackgroundPro
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
 
         if (cfg.saturation === 0) {
-          ctx.fillStyle = `rgba(0, 255, 65, ${p.opacity})`;
+          ctx.fillStyle = `rgba(100, 100, 100, ${p.opacity})`;
         } else {
           ctx.fillStyle = `hsla(${p.hue}, ${cfg.saturation}%, ${cfg.lightness}%, ${p.opacity})`;
         }

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { ELEVENLABS_TTS_MODEL } from "../lib/constants";
 
 interface CharacterAlignment {
   characters: string[];
@@ -112,7 +113,7 @@ export function useStreamingTTS({ voiceId, apiKey }: UseStreamingTTSOptions): Us
             },
             body: JSON.stringify({
               text,
-              model_id: "eleven_flash_v2_5",
+              model_id: ELEVENLABS_TTS_MODEL,
             }),
           }
         );

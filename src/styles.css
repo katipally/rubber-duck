@@ -1,42 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  /* Neon Cyberpunk palette */
-  --color-neon-bg: #0a0a0f;
-  --color-neon-surface: #12121a;
-  --color-neon-surface-light: #1a1a2e;
-  --color-neon-ink: #e0e0ff;
-  --color-neon-muted: #6b6b8a;
-  --color-neon-green: #00ff41;
-  --color-neon-pink: #ff006e;
-  --color-neon-cyan: #00f0ff;
-  --color-neon-purple: #b026ff;
-  --color-neon-yellow: #ffdd00;
-  --color-neon-red: #ff2d2d;
+  /* Neobrutalist palette */
+  --color-neo-bg: #e8ecf2;
+  --color-neo-surface: #ffffff;
+  --color-neo-ink: #0a0a0a;
+  --color-neo-blue: #1d4ed8;
+  --color-neo-red: #dc2626;
 
-  /* Shame ladder (neon) */
-  --color-shame-novice: #00f0ff;
-  --color-shame-intermediate: #b026ff;
-  --color-shame-senior: #ffdd00;
-  --color-shame-staff: #ff006e;
-  --color-shame-architect: #ff2d2d;
+  /* Shame ladder (solids) */
+  --color-shame-novice: #2563eb;
+  --color-shame-intermediate: #1d4ed8;
+  --color-shame-senior: #ea580c;
+  --color-shame-staff: #dc2626;
+  --color-shame-architect: #991b1b;
 
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Archivo Black", ui-sans-serif, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
-  --shadow-neon-green: 0 0 10px rgba(0, 255, 65, 0.3), 0 0 20px rgba(0, 255, 65, 0.1);
-  --shadow-neon-pink: 0 0 10px rgba(255, 0, 110, 0.3), 0 0 20px rgba(255, 0, 110, 0.1);
-  --shadow-neon-cyan: 0 0 10px rgba(0, 240, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.1);
+  --shadow-neo: 6px 6px 0 #0a0a0a;
+  --shadow-neo-sm: 4px 4px 0 #0a0a0a;
 
   --animate-fade-in: fade-in 0.4s ease-out forwards;
   --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
   --animate-slide-in-right: slide-in-right 0.3s ease-out forwards;
   --animate-cursor-blink: cursor-blink 0.8s step-end infinite;
-  --animate-neon-pulse: neon-pulse 2s ease-in-out infinite;
   --animate-glitch: glitch 0.3s ease-in-out;
   --animate-shake: shake 0.5s ease-in-out;
-  --animate-scanline: scanline 8s linear infinite;
 }
 
 @keyframes fade-in {
@@ -59,20 +49,7 @@
   50% { opacity: 0; }
 }
 
-@keyframes neon-pulse {
-  0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 65, 0.3), 0 0 10px rgba(0, 255, 65, 0.1); }
-  50% { box-shadow: 0 0 15px rgba(0, 255, 65, 0.5), 0 0 30px rgba(0, 255, 65, 0.2); }
-}
-
-@keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); }
-  60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
-}
-
+/* Fun effect animations */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   10% { transform: translateX(-4px) rotate(-0.5deg); }
@@ -85,9 +62,18 @@
   80% { transform: translateX(1px); }
 }
 
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 6px 6px 0 #0a0a0a, 0 0 0 rgba(29, 78, 216, 0); }
+  50% { box-shadow: 6px 6px 0 #0a0a0a, 0 0 15px rgba(29, 78, 216, 0.3); }
 }
 
 @keyframes fade-in-up-out {
@@ -104,17 +90,6 @@
   100% { opacity: 0; transform: translateX(-50%) translateY(-100%); }
 }
 
-@keyframes neon-pulse-ring {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(0, 240, 255, 0.3), 0 0 15px rgba(0, 240, 255, 0.1),
-                0 0 30px rgba(176, 38, 255, 0.05);
-  }
-  50% {
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.5), 0 0 30px rgba(0, 240, 255, 0.25),
-                0 0 60px rgba(176, 38, 255, 0.15);
-  }
-}
-
 @keyframes thinking-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
@@ -122,69 +97,18 @@
 
 @layer base {
   html, body, #root {
-    @apply m-0 min-h-screen overflow-x-hidden bg-neon-bg font-sans text-neon-ink antialiased;
+    @apply m-0 min-h-screen overflow-x-hidden bg-neo-bg font-sans text-neo-ink antialiased;
   }
 
   *, *::before, *::after {
     box-sizing: border-box;
   }
-
-  /* Full-screen CRT scanline overlay */
-  .crt-overlay {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.03) 0px,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-  }
-  .crt-overlay::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: rgba(0, 255, 65, 0.04);
-    animation: scanline 8s linear infinite;
-  }
-
-  /* Scrollbar styling */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #12121a; }
-  ::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
 }
 
-/* Utility classes for neon effects */
 @layer utilities {
-  .neon-border-green { border-color: #00ff41; box-shadow: 0 0 5px rgba(0, 255, 65, 0.3), inset 0 0 5px rgba(0, 255, 65, 0.05); }
-  .neon-border-pink { border-color: #ff006e; box-shadow: 0 0 5px rgba(255, 0, 110, 0.3), inset 0 0 5px rgba(255, 0, 110, 0.05); }
-  .neon-border-cyan { border-color: #00f0ff; box-shadow: 0 0 5px rgba(0, 240, 255, 0.3), inset 0 0 5px rgba(0, 240, 255, 0.05); }
-  .neon-border-purple { border-color: #b026ff; box-shadow: 0 0 5px rgba(176, 38, 255, 0.3), inset 0 0 5px rgba(176, 38, 255, 0.05); }
-  .neon-text-green { color: #00ff41; text-shadow: 0 0 7px rgba(0, 255, 65, 0.5); }
-  .neon-text-pink { color: #ff006e; text-shadow: 0 0 7px rgba(255, 0, 110, 0.5); }
-  .neon-text-cyan { color: #00f0ff; text-shadow: 0 0 7px rgba(0, 240, 255, 0.5); }
-  .neon-glow-green { box-shadow: 0 0 10px rgba(0, 255, 65, 0.3), 0 0 20px rgba(0, 255, 65, 0.1); }
-  .neon-glow-pink { box-shadow: 0 0 10px rgba(255, 0, 110, 0.3), 0 0 20px rgba(255, 0, 110, 0.1); }
-
-  .scanline-overlay::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: rgba(0, 255, 65, 0.03);
-    animation: scanline 8s linear infinite;
-    pointer-events: none;
-  }
-
-  /* Fun effect utilities */
   .shake-it { animation: shake 0.4s ease-in-out; }
   .glitch-it { animation: glitch 0.3s ease-in-out; }
-  .neon-pulse-ring { animation: neon-pulse-ring 2s ease-in-out infinite; }
+  .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
   .duck-reaction {
     animation: fade-in-up-out 1.5s ease-out forwards;
     pointer-events: none;
@@ -195,6 +119,6 @@
     pointer-events: none;
   }
   .thinking-bob { animation: thinking-bob 1s ease-in-out infinite; }
-  .hover-glow { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
-  .hover-glow:hover { box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
+  .hover-glow { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+  .hover-glow:hover { box-shadow: 8px 8px 0 #0a0a0a; transform: translate(-1px, -1px); }
 }

@@ -37,7 +37,6 @@ function GearIcon({ className }: { className?: string }) {
   );
 }
 
-// Curated voices that work well for the "Senior Dev" persona
 const CURATED_VOICES: Voice[] = [
   { voiceId: "JBFqnCBsd6RMkjVDRZzb", name: "George — British Storyteller (Default)", previewUrl: null, labels: { accent: "british", gender: "male" } },
   { voiceId: "nPczCjzI2devNBz1zQrb", name: "Brian — Deep & Resonant", previewUrl: null, labels: { accent: "american", gender: "male" } },
@@ -62,14 +61,12 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
     if (!agent || fetched.current) return;
     fetched.current = true;
 
-    // Models come from the agent (static list, no API call)
     agent.call("listModels").then((m: Model[]) => {
       setModels(m);
       if (agent.state?.selectedModel) setSelectedModel(agent.state.selectedModel);
       else if (m.length > 0) setSelectedModel(m[0].id);
     }).catch((err: unknown) => console.error("Failed to load models:", err));
 
-    // Load voices from ElevenLabs directly in the browser (avoids worker IP blocking)
     const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY;
     if (apiKey) {
       fetch("https://api.elevenlabs.io/v1/voices", {
@@ -88,12 +85,9 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
             );
           }
         })
-        .catch(() => {
-          // Keep curated defaults on error
-        });
+        .catch(() => {});
     }
 
-    // Sync selected voice from agent state
     if (agent.state?.selectedVoiceId) setSelectedVoice(agent.state.selectedVoiceId);
   }, [agent]);
 
@@ -138,22 +132,22 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
       <button
         type="button"
         onClick={onToggle}
-        className="fixed right-3 top-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center border border-neon-green/30 bg-neon-surface text-neon-green transition-all hover:bg-neon-green/10 hover:shadow-neon-green"
+        className="fixed right-3 top-3 z-50 flex h-10 w-10 cursor-pointer items-center justify-center border-[3px] border-neo-ink bg-neo-surface text-neo-ink shadow-neo-sm transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#0a0a0a]"
         title="Settings"
       >
         <GearIcon className={isOpen ? "rotate-90 transition-transform duration-300" : ""} />
       </button>
 
       {isOpen && (
-        <div className="fixed right-3 top-[3.75rem] z-40 w-80 space-y-4 border border-neon-green/30 bg-neon-surface p-4 neon-glow-green animate-slide-in-right">
-          <h3 className="text-sm font-black uppercase tracking-wider text-neon-ink">Settings</h3>
+        <div className="fixed right-3 top-[3.75rem] z-40 w-80 space-y-4 border-[3px] border-neo-ink bg-neo-surface p-4 shadow-neo animate-slide-in-right">
+          <h3 className="text-sm font-black uppercase tracking-wider text-neo-ink">Settings</h3>
 
           <div>
-            <label className="mb-1 block text-xs font-bold text-neon-muted">LLM model</label>
+            <label className="mb-1 block text-xs font-bold text-neutral-600">LLM model</label>
             <select
               value={selectedModel}
               onChange={(e) => handleModelChange(e.target.value)}
-              className="w-full cursor-pointer border border-neon-green/30 bg-neon-bg px-3 py-2 text-sm font-medium text-neon-ink focus:outline-none focus:ring-2 focus:ring-neon-cyan/35"
+              className="w-full cursor-pointer border-[3px] border-neo-ink bg-neo-surface px-3 py-2 text-sm font-medium text-neo-ink focus:outline-none focus:ring-4 focus:ring-neo-blue/35"
             >
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -164,22 +158,22 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-bold text-neon-muted">Voice</label>
+            <label className="mb-1 block text-xs font-bold text-neutral-600">Voice</label>
             <div className="max-h-48 space-y-1 overflow-y-auto pr-1">
               {voices.slice(0, 20).map((v) => (
                 <div
                   key={v.voiceId}
-                  className={`flex cursor-pointer items-center gap-2 border p-2 text-sm transition-colors ${
+                  className={`flex cursor-pointer items-center gap-2 border-[2px] p-2 text-sm transition-colors ${
                     selectedVoice === v.voiceId
-                      ? "border-neon-cyan/50 bg-neon-cyan/10"
-                      : "border-transparent hover:border-neon-green/20 hover:bg-neon-surface-light"
+                      ? "border-neo-blue bg-neo-blue/10"
+                      : "border-transparent hover:border-neo-ink/20 hover:bg-neutral-50"
                   }`}
                   onClick={() => handleVoiceChange(v.voiceId)}
                   onKeyDown={(e) => e.key === "Enter" && handleVoiceChange(v.voiceId)}
                   role="button"
                   tabIndex={0}
                 >
-                  <span className="min-w-0 flex-1 truncate font-medium text-neon-ink">{v.name}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium text-neo-ink">{v.name}</span>
                   {v.previewUrl && (
                     <button
                       type="button"
@@ -187,7 +181,7 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
                         e.stopPropagation();
                         playPreview(v.previewUrl, v.voiceId);
                       }}
-                      className="shrink-0 cursor-pointer border border-neon-green/30 bg-neon-surface-light px-2 py-1 text-xs font-bold text-neon-green hover:bg-neon-green/10"
+                      className="shrink-0 cursor-pointer border-[2px] border-neo-ink bg-neo-surface px-2 py-1 text-xs font-bold text-neo-ink hover:bg-neutral-100"
                     >
                       {playingVoiceId === v.voiceId ? "Stop" : "Play"}
                     </button>
@@ -195,7 +189,7 @@ export default function SettingsPanel({ agent, isOpen, onToggle }: SettingsPanel
                 </div>
               ))}
               {voices.length === 0 && (
-                <div className="py-2 text-xs text-neon-muted">Loading voices…</div>
+                <div className="py-2 text-xs text-neutral-500">Loading voices…</div>
               )}
             </div>
           </div>
