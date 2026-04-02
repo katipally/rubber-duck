@@ -19,9 +19,9 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto w-full max-w-2xl animate-fade-in-up">
-      <div className="space-y-6 border-[3px] border-neo-ink bg-neo-surface p-6 shadow-neo sm:p-8 sm:space-y-7">
+      <div className="space-y-6 border border-neon-green/30 bg-neon-surface p-6 sm:p-8 sm:space-y-7 neon-glow-green">
         <div>
-          <label className="mb-3 block text-sm font-bold text-neutral-700 sm:text-base">
+          <label className="mb-3 block text-sm font-bold text-neon-muted sm:text-base">
             Paste a GitHub repo URL to get roasted
           </label>
           <input
@@ -30,7 +30,7 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://github.com/your-regrettable-repo"
             disabled={disabled || isLoading}
-            className="w-full border-[3px] border-neo-ink bg-neo-surface px-4 py-3 text-lg font-medium text-neo-ink placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-neo-blue/35 disabled:opacity-50"
+            className="w-full border border-neon-green/30 bg-neon-bg px-4 py-3 text-lg font-medium text-neon-ink placeholder:text-neon-muted/50 focus:outline-none focus:ring-2 focus:ring-neon-cyan/35 disabled:opacity-50"
           />
         </div>
 
@@ -38,9 +38,9 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
           <button
             type="button"
             onClick={() => setShowPat(!showPat)}
-            className="flex items-center gap-2 text-sm font-semibold text-neutral-600 transition-colors hover:text-neo-ink"
+            className="flex items-center gap-2 text-sm font-semibold text-neon-muted transition-colors hover:text-neon-ink"
           >
-            <span className="font-mono text-neo-blue">{showPat ? "[−]" : "[+]"}</span>
+            <span className="font-mono text-neon-cyan">{showPat ? "[−]" : "[+]"}</span>
             Private repo? Add a PAT
           </button>
 
@@ -52,9 +52,9 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
                 onChange={(e) => setPat(e.target.value)}
                 placeholder="ghp_your_personal_access_token"
                 disabled={disabled || isLoading}
-                className="w-full border-[3px] border-neo-ink bg-neo-surface px-4 py-2 text-sm font-medium text-neo-ink placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-neo-blue/35 disabled:opacity-50"
+                className="w-full border border-neon-green/30 bg-neon-bg px-4 py-2 text-sm font-medium text-neon-ink placeholder:text-neon-muted/50 focus:outline-none focus:ring-2 focus:ring-neon-cyan/35 disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-neutral-500">
+              <p className="mt-1 text-xs text-neon-muted">
                 Token never leaves the server. Only needs read access.
               </p>
             </div>
@@ -64,12 +64,12 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
         <button
           type="submit"
           disabled={disabled || isLoading || !url.trim()}
-          className="w-full cursor-pointer border-[3px] border-neo-ink bg-neo-red py-4 text-lg font-black text-white shadow-neo-sm transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#0a0a0a] disabled:cursor-not-allowed disabled:opacity-45"
+          className="hover-glow w-full cursor-pointer border border-neon-pink/50 bg-neon-pink py-4 text-lg font-black text-white transition-all hover:shadow-neon-pink disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-3">
               <span
-                className="inline-block size-5 shrink-0 rounded-full border-[3px] border-neo-ink border-t-neo-blue animate-spin"
+                className="inline-block size-5 shrink-0 rounded-full border-2 border-neon-muted border-t-neon-cyan animate-spin"
                 aria-hidden
               />
               Analyzing your sins...

@@ -18,9 +18,9 @@ export default function FileList({ files, onRoastFile, currentlyRoasting }: File
 
   return (
     <div className="mx-auto w-full max-w-2xl animate-fade-in-up">
-      <div className="border-[3px] border-neo-ink bg-neo-surface p-4 shadow-neo">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-neo-ink">
-          <span className="h-2 w-2 bg-neo-red ring-2 ring-neo-ink" aria-hidden />
+      <div className="border border-neon-green/30 bg-neon-surface p-4 neon-glow-green">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-neon-ink">
+          <span className="h-2 w-2 bg-neon-pink" aria-hidden />
           Roast-worthy files
         </h3>
 
@@ -32,41 +32,41 @@ export default function FileList({ files, onRoastFile, currentlyRoasting }: File
             return (
               <div
                 key={file.path}
-                className={`flex items-start gap-3 border-[3px] p-3 transition-colors ${
+                className={`flex items-start gap-3 border p-3 transition-colors ${
                   isRoasting
-                    ? "border-neo-red bg-red-50"
+                    ? "border-neon-pink/50 bg-neon-pink/10"
                     : wasRoasted
-                      ? "border-green-700 bg-green-50"
-                      : "border-neutral-300 bg-neutral-50 hover:border-neo-ink"
+                      ? "border-neon-green/30 bg-neon-green/5"
+                      : "border-neon-ink/10 hover:border-neon-cyan/30"
                 }`}
               >
                 <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center">
                   {isRoasting ? (
                     <span
-                      className="inline-block size-4 rounded-full border-2 border-neo-ink border-t-neo-red animate-spin"
+                      className="inline-block size-4 rounded-full border-2 border-neon-muted border-t-neon-pink animate-spin"
                       aria-hidden
                     />
                   ) : wasRoasted ? (
-                    <span className="text-sm font-black text-green-800" aria-hidden>
+                    <span className="text-sm font-black text-neon-green" aria-hidden>
                       OK
                     </span>
                   ) : (
-                    <span className="text-xs font-bold text-neutral-400" aria-hidden>
+                    <span className="text-xs font-bold text-neon-muted" aria-hidden>
                       ·
                     </span>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-mono text-sm font-bold text-neo-blue">{file.path}</div>
-                  <div className="mt-1 text-xs text-neutral-600">{file.reason}</div>
+                  <div className="truncate font-mono text-sm font-bold text-neon-cyan">{file.path}</div>
+                  <div className="mt-1 text-xs text-neon-muted">{file.reason}</div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => handleRoast(file.path)}
                   disabled={isRoasting}
-                  className="shrink-0 cursor-pointer border-2 border-neo-ink bg-neo-red px-3 py-1.5 text-xs font-black text-white shadow-neo-sm transition-all hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#0a0a0a] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="shrink-0 cursor-pointer border border-neon-pink/50 bg-neon-pink px-3 py-1.5 text-xs font-black text-white transition-all hover:shadow-neon-pink disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isRoasting ? "Roasting…" : wasRoasted ? "Roast again" : "Roast this"}
                 </button>

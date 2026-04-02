@@ -34,6 +34,7 @@ export interface RoastAgentState {
   shameLevelIndex: number;
   progressToNext: number;
   roastHistory: RoastHistoryEntry[];
+  roastCache: Record<string, { roastText: string; timestamp: number }>;
   currentRepo: string | null;
   repoFiles: Array<{ path: string; reason: string }> | null;
   selectedModel: string;
@@ -52,6 +53,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
     shameLevelIndex: 0,
     progressToNext: 0,
     roastHistory: [],
+    roastCache: {},
     currentRepo: null,
     repoFiles: null,
     selectedModel: DEFAULT_MODEL,
@@ -136,10 +138,14 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       this.updateStatus("Identifying your worst offenses...");
       const pickedFiles = pickRoastWorthyFiles(files, 5);
 
+      const newCache = { ...this.state.roastCache };
+      newCache["__overview__"] = { roastText: overview, timestamp: Date.now() };
+
       this.setState({
         ...this.state,
         currentRepo: url,
         repoFiles: pickedFiles,
+        roastCache: newCache,
         isProcessing: false,
         statusMessage: "",
       });
@@ -199,15 +205,18 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       // Escalate shame
       this.escalateShame();
 
-      // Add to history
+      // Add to history and cache
       const entry: RoastHistoryEntry = {
         fileName: filePath,
         roastText,
         timestamp: Date.now(),
       };
+      const newCache = { ...this.state.roastCache };
+      newCache[filePath] = { roastText, timestamp: Date.now() };
       this.setState({
         ...this.state,
         roastHistory: [...this.state.roastHistory, entry],
+        roastCache: newCache,
         isProcessing: false,
         statusMessage: "",
       });
@@ -312,6 +321,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       shameLevelIndex: 0,
       progressToNext: 0,
       roastHistory: [],
+      roastCache: {},
       currentRepo: null,
       repoFiles: null,
       selectedModel: this.state.selectedModel,
@@ -319,6 +329,95 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       isProcessing: false,
       statusMessage: "",
     });
+  }
+
+  @callable()
+  async clearFileRoast(filePath: string) {
+    const newCache = { ...this.state.roastCache };
+    delete newCache[filePath];
+    const newHistory = this.state.roastHistory.filter(h => h.fileName !== filePath);
+    this.setState({
+      ...this.state,
+      roastCache: newCache,
+      roastHistory: newHistory,
+    });
+  }
+
+  @callable()
+  async getCachedRoast(filePath: string): Promise<{ roastText: string; timestamp: number } | null> {
+    return this.state.roastCache[filePath] ?? null;
+  }
+
+  @callable()
+  async roastFullRepo(pat?: string): Promise<{ roastText: string } | { error: string }> {
+    const parsed = this.state.currentRepo ? parseGitHubUrl(this.state.currentRepo) : null;
+    if (!parsed) {
+      return { error: "No repository loaded. Load a repo first, genius." };
+    }
+
+    this.setState({ ...this.state, isProcessing: true });
+    this.updateStatus("Preparing the ultimate verdict...");
+
+    try {
+      const { files } = await fetchRepoTree(parsed.owner, parsed.repo, pat, this.env.GITHUB_TOKEN);
+      const fileTree = buildFileTree(files);
+      const truncatedTree = fileTree.split("\n").slice(0, 150).join("\n") +
+        (files.length > 150 ? `\n... and ${files.length - 150} more files` : "");
+
+      const workersai = createWorkersAI({ binding: this.env.AI });
+
+      const prompt = `You are an elite principal engineer with 30 years of experience. You've been forced to review this repository and you are DISGUSTED.
+
+Repository: ${parsed.owner}/${parsed.repo}
+File structure:
+${truncatedTree}
+
+Previous roasts from this session (for context):
+${this.state.roastHistory.map(r => `- ${r.fileName}: "${r.roastText.slice(0, 100)}"`).join("\n")}
+
+Current shame level: ${this.state.shameLevel} (insult level: ${this.state.insultLevel})
+
+Give a COMPREHENSIVE, DEVASTATING verdict on this entire repository. Cover:
+1. Architecture and file organization (mock their folder structure)
+2. Technology choices (question everything)
+3. Naming conventions (find the worst examples)
+4. Overall code quality assessment (be theatrical)
+5. A final "sentence" - like a judge passing down a ruling
+
+Be savage but specific. Reference actual file paths from the tree. This is the ULTIMATE roast.
+Keep it to 6-8 sentences. Every sentence should HURT. End with a devastating verdict.`;
+
+      const { text: roastText } = await generateText({
+        model: workersai(this.state.selectedModel),
+        prompt,
+        maxTokens: 500,
+      });
+
+      this.escalateShame();
+
+      const entry: RoastHistoryEntry = {
+        fileName: "Full Repository Verdict",
+        roastText,
+        timestamp: Date.now(),
+      };
+
+      const newCache = { ...this.state.roastCache };
+      newCache["__full_repo__"] = { roastText, timestamp: Date.now() };
+
+      this.setState({
+        ...this.state,
+        roastHistory: [...this.state.roastHistory, entry],
+        roastCache: newCache,
+        isProcessing: false,
+        statusMessage: "",
+      });
+
+      return { roastText };
+    } catch (err) {
+      this.setState({ ...this.state, isProcessing: false, statusMessage: "" });
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      return { error: `Full repo roast failed: ${msg}` };
+    }
   }
 
   // We don't use the chat flow for this agent, but it's required by AIChatAgent
