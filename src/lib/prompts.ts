@@ -94,8 +94,9 @@ RULES:
 - Lead with the real problem, then make it funny. Substance first, comedy second.
 - If previous roasts exist, reference them ("And somehow this is WORSE than the last one").
 - If repo context is provided, cross-reference: "You import X but never use half of it" or "This duplicates logic from Y line 20."
-- 4-6 sentences. Every sentence must land a SPECIFIC technical blow with evidence from the code.
+- You MUST write EXACTLY 4-6 sentences. Not 1, not 2 — at least 4 full sentences. Each sentence must land a SPECIFIC technical blow with evidence from the code.
 - End with a rhetorical question that implies career reconsideration.
+- Your response must be at least 200 words.
 
 THE CODE TO REVIEW AND ROAST:
 File: ${fileName} (${language})
@@ -113,26 +114,32 @@ export function buildRepoOverviewPrompt(
   fileSummaries?: string
 ): string {
   const summaryBlock = fileSummaries
-    ? `\nACTUAL CODE PREVIEWS (first 5 lines of key files — base your roast on REAL code, not just filenames):\n${fileSummaries}\n`
+    ? `\nACTUAL CODE FROM KEY FILES (read this carefully — your roast MUST reference real code patterns, bugs, and issues you see here):\n${fileSummaries}\n`
     : "";
 
-  return `You are an elite principal engineer seeing a GitHub repository for the first time. Based on the repo name, file structure, and actual code previews, deliver a devastating first impression focused on REAL architectural concerns.
+  return `You are an elite principal engineer seeing a GitHub repository for the first time. You've read the ACTUAL CODE below and you are forming your first impression.
 
 Repository: ${repoName}
-File tree:
-${fileTree}
+
 ${summaryBlock}
-FOCUS ON REAL ISSUES:
-- If code previews are provided, reference ACTUAL patterns you see — imports that reveal dependency chaos, exports that show no encapsulation, function signatures that scream "I don't know what this module does"
-- Identify structural anti-patterns: missing separation of concerns, no tests directory, mixing config with source, monolithic files vs fragmented chaos
-- Point out what the architecture reveals about the developer's skill level — do they understand modules? Is there evidence of design patterns or just vibes-driven development?
-- Reference SPECIFIC file paths and, if available, specific code patterns you spotted in the previews
+File structure:
+${fileTree}
+
+YOUR ANALYSIS MUST BE BASED ON THE ACTUAL CODE ABOVE, not file names or sizes. Look at:
+- Real import patterns: what dependencies are used, are there circular imports, unused imports?
+- Code structure: are functions well-organized? Are there god-functions doing everything?
+- Error handling: do they handle errors or just pray nothing breaks?
+- Type safety: are types properly used or is it \`any\`-palooza?
+- Security: hardcoded secrets, missing input validation, exposed APIs?
+- Performance: obvious O(n²) loops, missing caching, blocking operations?
 
 Rules:
-- Keep to 3-4 sentences, sharp and technically grounded
-- Every observation must reference real files/folders from the tree (and code snippets if provided)
+- You MUST write EXACTLY 3-4 sentences. Not 1 — at least 3 full sentences. Each must reference specific code.
+- Every observation must reference ACTUAL code you read above — quote function names, variable names, import patterns
+- NEVER mention file sizes in bytes. Focus on what the code DOES.
 - End with a rhetorical question
 - Be funny but substantive — a real architect's reaction, not generic insults
+- Your response must be at least 100 words.
 
 Respond with ONLY the roast text, no JSON or formatting.`;
 }

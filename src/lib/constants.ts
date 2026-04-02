@@ -99,7 +99,7 @@ export const MAX_SPEAK_CHARS = 600;
 
 // ── Token limits per generation type ─────────────────────────
 export const TOKEN_LIMITS = {
-  OVERVIEW: 300,
-  FILE_ROAST: 400,
-  FULL_REPO: 500,
+  OVERVIEW: 500,
+  FILE_ROAST: 700,
+  FULL_REPO: 900,
 } as const;

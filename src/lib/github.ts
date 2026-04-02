@@ -114,6 +114,11 @@ export async function fetchRepoTree(
     ".idea",
     ".vscode",
     "coverage",
+    "Ref",
+    "ref",
+    "docs",
+    "examples",
+    ".wrangler",
   ];
   const ignoreExts = [
     "png", "jpg", "jpeg", "gif", "svg", "ico", "woff", "woff2",
@@ -175,8 +180,8 @@ export async function fetchFileContent(
 
 export function buildFileTree(files: RepoFile[]): string {
   return files
-    .slice(0, MAX_TREE_FILES) // limit tree size
-    .map((f) => `${f.path} (${f.size} bytes)`)
+    .slice(0, MAX_TREE_FILES)
+    .map((f) => f.path)
     .join("\n");
 }
 

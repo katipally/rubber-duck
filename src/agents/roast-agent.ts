@@ -191,7 +191,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       // Generate overview with actual file summaries
       this.updateStatus("Forming first impressions with actual code...");
       const fileSummaries = Object.entries(fileContents).map(([path, { content, language }]) => {
-        const firstLines = content.split("\n").slice(0, 5).join("\n");
+        const firstLines = content.split("\n").slice(0, 20).join("\n");
         return `--- ${path} (${language}) ---\n${firstLines}`;
       }).join("\n\n");
 
@@ -204,6 +204,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
         model: workersai(this.state.selectedModel),
         prompt: overviewPrompt,
         maxTokens: TOKEN_LIMITS.OVERVIEW,
+        temperature: 0.8,
       });
 
       const newCache = { ...this.state.roastCache };
@@ -281,6 +282,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
         model: workersai(this.state.selectedModel),
         prompt,
         maxTokens: TOKEN_LIMITS.FILE_ROAST,
+        temperature: 0.8,
       });
 
       // Escalate shame
@@ -400,34 +402,49 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
 
       const workersai = createWorkersAI({ binding: this.env.AI });
 
-      const prompt = `You are an elite principal engineer conducting a FINAL VERDICT on this entire repository. You are DISGUSTED — but your disgust is grounded in REAL technical problems, not surface-level nitpicks.
+      // Include actual code snippets from pre-loaded files
+      const codeSnippets = Object.entries(this.state.fileContents)
+        .map(([path, { content, language }]) => {
+          const snippet = content.split("\n").slice(0, 50).join("\n");
+          return `--- ${path} (${language}) ---\n${snippet}`;
+        })
+        .join("\n\n");
+
+      const prompt = `You are an elite principal engineer conducting a FINAL VERDICT on this entire repository. You've read the actual code and you are appalled.
 
 Repository: ${parsed.owner}/${parsed.repo}
-File structure:
+
+ACTUAL CODE FROM KEY FILES:
+${codeSnippets}
+
+File structure overview:
 ${truncatedTree}
 
 Previous roasts from this session:
-${this.state.roastHistory.map(r => `- ${r.fileName}: "${r.roastText.slice(0, 100)}"`).join("\n")}
+${this.state.roastHistory.map(r => `- ${r.fileName}: "${r.roastText.slice(0, 80)}"`).join("\n")}
 
-Current shame level: ${this.state.shameLevel} (insult level: ${this.state.insultLevel})
+INSTRUCTIONS:
+Write a devastating comprehensive code review. You MUST reference ACTUAL CODE you see above — specific function names, variable names, patterns, anti-patterns, bugs, and design flaws. DO NOT just comment on file names or sizes.
 
-Give a COMPREHENSIVE, DEVASTATING verdict. For EACH point, reference SPECIFIC files from the tree and explain the REAL technical problem:
-1. **Architecture** — Is there actual separation of concerns? Are there god-files? Is the dependency graph sane? Reference specific paths.
-2. **Missing essentials** — No tests? No CI config? No error boundaries? No types? No documentation? Call out what's ABSENT.
-3. **Dependency red flags** — Package bloat, outdated patterns, framework misuse, unnecessary abstractions visible from structure alone.
-4. **Code organization smells** — Files in wrong directories, inconsistent patterns, evidence of abandoned refactors, mixed paradigms.
-5. **The verdict** — A judge-style ruling summarizing the developer's engineering maturity based on evidence.
+For each point, quote the specific code or pattern you're roasting:
+- Real bugs you spotted (null checks missing, logic errors, race conditions)
+- Performance issues (unnecessary iterations, missing caching, blocking calls)
+- Architecture problems visible in the actual imports and function structures
+- Security concerns (hardcoded values, missing validation, exposed internals)
+- Code quality (duplicated logic across files, dead code, inconsistent patterns)
 
 RULES:
-- Every claim MUST reference actual file paths from the tree. No generic insults.
-- Be savage but TECHNICALLY ACCURATE — this should read like a brutal but legitimate architecture review.
-- 6-8 sentences, every one landing a specific technical blow.
-- End with a devastating verdict that a real tech lead might actually write (if they had no filter).`;
+- Every sentence must reference something you SAW in the actual code above
+- Be savage but technically precise — this should read like the worst PR review of their life
+- 6-8 sentences. Each one a specific, evidence-backed technical blow.
+- End with a devastating verdict.
+- NEVER mention file sizes in bytes. Focus on what the code DOES, not how big it is.`;
 
       const { text: roastText } = await generateText({
         model: workersai(this.state.selectedModel),
         prompt,
         maxTokens: TOKEN_LIMITS.FULL_REPO,
+        temperature: 0.8,
       });
 
       this.escalateShame();

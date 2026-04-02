@@ -9,6 +9,7 @@ import SettingsPanel from "./components/SettingsPanel";
 import FileList from "./components/FileList";
 import ParticleBackground from "./components/ParticleBackground";
 import { useStreamingTTS } from "./hooks/useStreamingTTS";
+import { DEFAULT_VOICE_ID, MAX_SPEAK_CHARS } from "./lib/constants";
 
 type Phase = "input" | "loaded" | "roasting";
 
@@ -39,7 +40,7 @@ export default function App() {
     onClose: () => setConnected(false),
   });
 
-  const voiceId = agent.state?.selectedVoiceId || "JBFqnCBsd6RMkjVDRZzb";
+  const voiceId = agent.state?.selectedVoiceId || DEFAULT_VOICE_ID;
   const ttsApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY ?? "";
   const { speak, isSpeaking, ttsError, stop: stopSpeaking, revealedCount } = useStreamingTTS({ voiceId, apiKey: ttsApiKey });
 
@@ -78,7 +79,7 @@ export default function App() {
 
         if (result.overview) {
           const shortOverview =
-            result.overview.length > 500 ? result.overview.slice(0, 500) + "..." : result.overview;
+            result.overview.length > MAX_SPEAK_CHARS ? result.overview.slice(0, MAX_SPEAK_CHARS) + "..." : result.overview;
           speak(shortOverview).catch(() => {});
         }
       } catch (err) {
@@ -115,7 +116,7 @@ export default function App() {
         triggerDuckReaction();
 
         const shortRoast =
-          result.roastText.length > 600 ? result.roastText.slice(0, 600) + "..." : result.roastText;
+          result.roastText.length > MAX_SPEAK_CHARS ? result.roastText.slice(0, MAX_SPEAK_CHARS) + "..." : result.roastText;
         speak(shortRoast).catch(() => {});
       } catch (err) {
         setError(
@@ -153,7 +154,7 @@ export default function App() {
       setCurrentFileName("Full Repository Verdict");
       setIsTypewriting(true);
       triggerDuckReaction();
-      const short = result.roastText.length > 600 ? result.roastText.slice(0, 600) + "..." : result.roastText;
+      const short = result.roastText.length > MAX_SPEAK_CHARS ? result.roastText.slice(0, MAX_SPEAK_CHARS) + "..." : result.roastText;
       speak(short).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Full repo roast failed.");
