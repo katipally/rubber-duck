@@ -76,9 +76,9 @@ export function useStreamingTTS({ agent }: UseStreamingTTSOptions): UseStreaming
         if (mountedRef.current) {
           const errMsg = err instanceof Error ? err.message : String(err);
           if (errMsg.includes("401") || errMsg.includes("unusual_activity")) {
-            setTtsError("🔇 ElevenLabs API key issue — roast text still works, voice is on vacation.");
+            setTtsError("ElevenLabs API key issue — roast text still works; voice is unavailable.");
           } else {
-            setTtsError("🔇 Voice failed to load. The duck is speechless (for once).");
+            setTtsError("Voice failed to load. Text-only mode.");
           }
           setIsSpeaking(false);
           audioRef.current = null;

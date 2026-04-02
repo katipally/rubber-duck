@@ -17,10 +17,11 @@ export default function FileList({ files, onRoastFile, currentlyRoasting }: File
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in-up">
-      <div className="glass-panel rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <span>🎯</span> Roast-Worthy Files
+    <div className="mx-auto w-full max-w-2xl animate-fade-in-up">
+      <div className="border-[3px] border-neo-ink bg-neo-surface p-4 shadow-neo">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-neo-ink">
+          <span className="h-2 w-2 bg-neo-red ring-2 ring-neo-ink" aria-hidden />
+          Roast-worthy files
         </h3>
 
         <div className="space-y-2">
@@ -31,43 +32,43 @@ export default function FileList({ files, onRoastFile, currentlyRoasting }: File
             return (
               <div
                 key={file.path}
-                className={`flex items-start gap-3 p-3 rounded-lg border transition-smooth
-                  ${isRoasting
-                    ? "border-red-500/50 bg-red-500/5"
+                className={`flex items-start gap-3 border-[3px] p-3 transition-colors ${
+                  isRoasting
+                    ? "border-neo-red bg-red-50"
                     : wasRoasted
-                      ? "border-green-500/20 bg-green-500/5"
-                      : "border-[#222] hover:border-[#444]"
-                  }`}
+                      ? "border-green-700 bg-green-50"
+                      : "border-neutral-300 bg-neutral-50 hover:border-neo-ink"
+                }`}
               >
-                {/* Status indicator */}
-                <div className="mt-1 flex-shrink-0 text-sm">
+                <div className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center">
                   {isRoasting ? (
-                    <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>
-                      🔥
-                    </span>
+                    <span
+                      className="inline-block size-4 rounded-full border-2 border-neo-ink border-t-neo-red animate-spin"
+                      aria-hidden
+                    />
                   ) : wasRoasted ? (
-                    <span className="text-green-500">✓</span>
+                    <span className="text-sm font-black text-green-800" aria-hidden>
+                      OK
+                    </span>
                   ) : (
-                    <span className="text-neutral-600">○</span>
+                    <span className="text-xs font-bold text-neutral-400" aria-hidden>
+                      ·
+                    </span>
                   )}
                 </div>
 
-                {/* File info */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono text-sm text-amber-400 truncate">{file.path}</div>
-                  <div className="text-xs text-neutral-500 mt-1">{file.reason}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-mono text-sm font-bold text-neo-blue">{file.path}</div>
+                  <div className="mt-1 text-xs text-neutral-600">{file.reason}</div>
                 </div>
 
-                {/* Roast button */}
                 <button
+                  type="button"
                   onClick={() => handleRoast(file.path)}
                   disabled={isRoasting}
-                  className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg
-                             bg-red-600/80 hover:bg-red-500 text-white
-                             disabled:bg-neutral-800 disabled:text-neutral-600
-                             transition-smooth cursor-pointer disabled:cursor-not-allowed"
+                  className="shrink-0 cursor-pointer border-2 border-neo-ink bg-neo-red px-3 py-1.5 text-xs font-black text-white shadow-neo-sm transition-all hover:translate-x-px hover:translate-y-px hover:shadow-[1px_1px_0_#0a0a0a] disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {isRoasting ? "Roasting..." : wasRoasted ? "Roast Again" : "Roast This"}
+                  {isRoasting ? "Roasting…" : wasRoasted ? "Roast again" : "Roast this"}
                 </button>
               </div>
             );

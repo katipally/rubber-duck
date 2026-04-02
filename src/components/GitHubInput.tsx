@@ -18,11 +18,10 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto animate-fade-in-up">
-      <div className="glass-panel rounded-xl p-6 space-y-4">
-        {/* URL input */}
+    <form onSubmit={handleSubmit} className="mx-auto w-full max-w-2xl animate-fade-in-up">
+      <div className="space-y-6 border-[3px] border-neo-ink bg-neo-surface p-6 shadow-neo sm:p-8 sm:space-y-7">
         <div>
-          <label className="block text-sm font-medium text-neutral-400 mb-2">
+          <label className="mb-3 block text-sm font-bold text-neutral-700 sm:text-base">
             Paste a GitHub repo URL to get roasted
           </label>
           <input
@@ -31,22 +30,18 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://github.com/your-regrettable-repo"
             disabled={disabled || isLoading}
-            className="w-full px-4 py-3 bg-[#111] border border-[#333] rounded-lg
-                       text-white placeholder-neutral-600 text-lg
-                       focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/50
-                       disabled:opacity-50 transition-smooth"
+            className="w-full border-[3px] border-neo-ink bg-neo-surface px-4 py-3 text-lg font-medium text-neo-ink placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-neo-blue/35 disabled:opacity-50"
           />
         </div>
 
-        {/* Private repo toggle */}
         <div>
           <button
             type="button"
             onClick={() => setShowPat(!showPat)}
-            className="text-sm text-neutral-500 hover:text-neutral-300 transition-smooth flex items-center gap-1"
+            className="flex items-center gap-2 text-sm font-semibold text-neutral-600 transition-colors hover:text-neo-ink"
           >
-            <span className="text-xs">{showPat ? "▼" : "▶"}</span>
-            Private Repo? Add a PAT
+            <span className="font-mono text-neo-blue">{showPat ? "[−]" : "[+]"}</span>
+            Private repo? Add a PAT
           </button>
 
           {showPat && (
@@ -57,36 +52,30 @@ export default function GitHubInput({ onSubmit, isLoading, disabled }: GitHubInp
                 onChange={(e) => setPat(e.target.value)}
                 placeholder="ghp_your_personal_access_token"
                 disabled={disabled || isLoading}
-                className="w-full px-4 py-2 bg-[#111] border border-[#333] rounded-lg
-                           text-white placeholder-neutral-600 text-sm
-                           focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50
-                           disabled:opacity-50 transition-smooth"
+                className="w-full border-[3px] border-neo-ink bg-neo-surface px-4 py-2 text-sm font-medium text-neo-ink placeholder:text-neutral-400 focus:outline-none focus:ring-4 focus:ring-neo-blue/35 disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-neutral-600">
+              <p className="mt-1 text-xs text-neutral-500">
                 Token never leaves the server. Only needs read access.
               </p>
             </div>
           )}
         </div>
 
-        {/* Submit button */}
         <button
           type="submit"
           disabled={disabled || isLoading || !url.trim()}
-          className="w-full py-4 bg-red-600 hover:bg-red-500 disabled:bg-neutral-800
-                     disabled:text-neutral-600 text-white font-bold text-lg rounded-lg
-                     transition-smooth btn-glow disabled:animate-none
-                     disabled:shadow-none cursor-pointer disabled:cursor-not-allowed"
+          className="w-full cursor-pointer border-[3px] border-neo-ink bg-neo-red py-4 text-lg font-black text-white shadow-neo-sm transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_#0a0a0a] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="inline-block" style={{ animation: "spin 1s linear infinite" }}>
-                🦆
-              </span>
+            <span className="flex items-center justify-center gap-3">
+              <span
+                className="inline-block size-5 shrink-0 rounded-full border-[3px] border-neo-ink border-t-neo-blue animate-spin"
+                aria-hidden
+              />
               Analyzing your sins...
             </span>
           ) : (
-            "🔥 Roast This Repo"
+            "Roast this repo"
           )}
         </button>
       </div>
