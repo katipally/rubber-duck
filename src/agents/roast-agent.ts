@@ -200,6 +200,7 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
       const { text: roastText } = await generateText({
         model: workersai(this.state.selectedModel),
         prompt,
+        maxTokens: 400,
       });
 
       // Escalate shame
@@ -366,26 +367,29 @@ export class RoastAgent extends AIChatAgent<Env, RoastAgentState> {
 
       const workersai = createWorkersAI({ binding: this.env.AI });
 
-      const prompt = `You are an elite principal engineer with 30 years of experience. You've been forced to review this repository and you are DISGUSTED.
+      const prompt = `You are an elite principal engineer conducting a FINAL VERDICT on this entire repository. You are DISGUSTED — but your disgust is grounded in REAL technical problems, not surface-level nitpicks.
 
 Repository: ${parsed.owner}/${parsed.repo}
 File structure:
 ${truncatedTree}
 
-Previous roasts from this session (for context):
+Previous roasts from this session:
 ${this.state.roastHistory.map(r => `- ${r.fileName}: "${r.roastText.slice(0, 100)}"`).join("\n")}
 
 Current shame level: ${this.state.shameLevel} (insult level: ${this.state.insultLevel})
 
-Give a COMPREHENSIVE, DEVASTATING verdict on this entire repository. Cover:
-1. Architecture and file organization (mock their folder structure)
-2. Technology choices (question everything)
-3. Naming conventions (find the worst examples)
-4. Overall code quality assessment (be theatrical)
-5. A final "sentence" - like a judge passing down a ruling
+Give a COMPREHENSIVE, DEVASTATING verdict. For EACH point, reference SPECIFIC files from the tree and explain the REAL technical problem:
+1. **Architecture** — Is there actual separation of concerns? Are there god-files? Is the dependency graph sane? Reference specific paths.
+2. **Missing essentials** — No tests? No CI config? No error boundaries? No types? No documentation? Call out what's ABSENT.
+3. **Dependency red flags** — Package bloat, outdated patterns, framework misuse, unnecessary abstractions visible from structure alone.
+4. **Code organization smells** — Files in wrong directories, inconsistent patterns, evidence of abandoned refactors, mixed paradigms.
+5. **The verdict** — A judge-style ruling summarizing the developer's engineering maturity based on evidence.
 
-Be savage but specific. Reference actual file paths from the tree. This is the ULTIMATE roast.
-Keep it to 6-8 sentences. Every sentence should HURT. End with a devastating verdict.`;
+RULES:
+- Every claim MUST reference actual file paths from the tree. No generic insults.
+- Be savage but TECHNICALLY ACCURATE — this should read like a brutal but legitimate architecture review.
+- 6-8 sentences, every one landing a specific technical blow.
+- End with a devastating verdict that a real tech lead might actually write (if they had no filter).`;
 
       const { text: roastText } = await generateText({
         model: workersai(this.state.selectedModel),
