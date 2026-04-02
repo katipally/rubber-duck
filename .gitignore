@@ -1,1 +1,24 @@
-/.DS_Store
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment secrets
+.dev.vars
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Wrangler
+.wrangler/
+
+# Generated types
+env.d.ts.playwright-mcp/
