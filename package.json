@@ -1,6 +1,6 @@
 {
   "name": "rubber-duck",
-  "description": "🦆 Rubber Duck — An AI Senior Dev that roasts your GitHub repos with escalating savagery. Built with Cloudflare Agents + ElevenLabs for ElevenHacks.",
+  "description": "AI-assisted GitHub repository review application using Cloudflare Workers, Workers AI, and ElevenLabs text-to-speech.",
   "private": true,
   "type": "module",
   "version": "0.1.0",
